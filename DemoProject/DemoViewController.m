@@ -22,7 +22,6 @@
 
 - (instancetype)init {
     self = [super init];
-    
     if (self) {
         self.coreDataStack = [CoreDataStack stack];
     }
@@ -32,10 +31,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addPerson:)];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemEdit target:self action:@selector(editTableView:)];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addButtonPressed:)];
+    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemEdit target:self action:@selector(editButtonPressed:)];
     self.navigationItem.title = @"CoreData";
-
     
     [self frc];
     self.view.backgroundColor = [UIColor whiteColor];
@@ -45,45 +43,32 @@
     [self.view addSubview:_tableView];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
+}
+
+- (NSFetchedResultsController *)frc {
+    if (_fetchResultsController ) return _fetchResultsController;
+    _fetchResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:[self fetchRequestForAge:0] managedObjectContext:_coreDataStack.coreDataContext sectionNameKeyPath:nil cacheName:nil];
     
-   // [self createPerson];
-        
-    NSLog(@"\nBefore");
-    
-    Person *lastPerson = [self findPerson].lastObject;
-    if (lastPerson) {
-     //   [self removePerson:lastPerson];
+    NSError *error = nil;
+    [_fetchResultsController performFetch:&error];
+    _fetchResultsController.delegate = self;
+    if (error) {
+        NSLog(@"%@", error.localizedDescription);
     }
-    
-    NSLog(@"\nAfter");
-
-    
-    [self findPerson];
+    return _fetchResultsController;
 }
 
-- (IBAction)editTableView:(id)sender {
-    if (!_tableView.editing) {
-        [_tableView setEditing:YES animated:YES];
-    } else {
-        [_tableView setEditing:NO animated:YES];
-    }
-}
-
-- (IBAction)addPerson:(id)sender {
-    [self createPerson];
-}
+#pragma mark - TableView DataSource and Delegate
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"cell"];
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"cell"];
     }
-    
     NSArray<Person *> *people = self.fetchResultsController.fetchedObjects;
     Person * currentObject = people[indexPath.row];
     cell.textLabel.text = currentObject.firstName;
     cell.detailTextLabel.text = [NSString stringWithFormat:@"%@, %hu", currentObject.lastName, currentObject.age];
-    
     return cell;
 }
 
@@ -95,17 +80,69 @@
     return self.fetchResultsController.fetchedObjects.count;
 }
 
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
+    Person *deletedPerson = _fetchResultsController.fetchedObjects[indexPath.row];
+    [self removePerson:deletedPerson];
+}
+
+#pragma mark - tableViewEditing
+
+- (IBAction)editButtonPressed:(id)sender {
+    if (!_tableView.editing) {
+        [_tableView setEditing:YES animated:YES];
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(doneButtonPressed:)];
+    } else {
+        [_tableView setEditing:NO animated:YES];
+        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addButtonPressed:)];
+    }
+}
+
+- (IBAction)doneButtonPressed:(id)sender {
+    [_tableView setEditing:NO animated:NO];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addButtonPressed:)];
+}
+
+- (IBAction)addButtonPressed:(id)sender {
+    UIAlertController *addPersonAlert = [UIAlertController alertControllerWithTitle:@"Добавление человека" message:@"Введите данные" preferredStyle:UIAlertControllerStyleAlert];
+    [addPersonAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"Имя";
+    }];
+    [addPersonAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @" Фамилия";
+    }];
+    [addPersonAlert addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = @"Возраст";
+    }];
+    
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"Готово" style: UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSDictionary *info = @{@"firstName" : addPersonAlert.textFields[0].text,
+                               @"secondName" : addPersonAlert.textFields[1].text,
+                               @"age" : addPersonAlert.textFields[2].text};
+        [self createPerson:info];
+    }];
+    [addPersonAlert addAction:okAction];
+    
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Отмена" style: UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    }];
+    [addPersonAlert addAction:cancelAction];
+    
+    [self presentViewController:addPersonAlert animated:YES completion:nil];
+}
+
+
+#pragma mark - Logic
+
 - (void)removePerson:(Person *)person {
     [_coreDataStack.coreDataContext deleteObject:person];
     [_coreDataStack save];
 }
 
-- (void)createPerson {
+- (void)createPerson:(NSDictionary *)info {
     [_coreDataStack.coreDataContext performBlock:^{
         Person *person = (id)[NSEntityDescription insertNewObjectForEntityForName:@"Person" inManagedObjectContext:self->_coreDataStack.coreDataContext];
-        person.firstName = @"Коля";
-        person.lastName = @"Иванов";
-        person.age = 10;
+        person.firstName = info[@"firstName"];
+        person.lastName = info[@"lastName"];
+        person.age = [info[@"age"] integerValue];
         [self->_coreDataStack save];
     }];
 }
@@ -136,40 +173,7 @@
     return request;
 }
 
-- (NSFetchedResultsController *)frc {
-    if (_fetchResultsController ) return _fetchResultsController;
-    
-    _fetchResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:[self fetchRequestForAge:0] managedObjectContext:_coreDataStack.coreDataContext sectionNameKeyPath:nil cacheName:nil];
-    
-    NSError *error = nil;
-    
-    [_fetchResultsController performFetch:&error];
-    _fetchResultsController.delegate = self;
-
-    
-    if (error) {
-        NSLog(@"%@", error.localizedDescription);
-    }
-    
-    return _fetchResultsController;
-}
-
-
 #pragma mark - fetchResultsControllerDelegate
-
-/* Notifies the delegate that a fetched object has been changed due to an add, remove, move, or update. Enables NSFetchedResultsController change tracking.
-controller - controller instance that noticed the change on its fetched objects
-anObject - changed object
-indexPath - indexPath of changed object (nil for inserts)
-type - indicates if the change was an insert, delete, move, or update
-newIndexPath - the destination path of changed object (nil for deletes)
-
-Changes are reported with the following heuristics:
-
-Inserts and Deletes are reported when an object is created, destroyed, or changed in such a way that changes whether it matches the fetch request's predicate. Only the Inserted/Deleted object is reported; like inserting/deleting from an array, it's assumed that all objects that come after the affected object shift appropriately.
-Move is reported when an object changes in a manner that affects its position in the results.  An update of the object is assumed in this case, no separate update message is sent to the delegate.
-Update is reported when an object's state changes, and the changes do not affect the object's position in the results.
-*/
 
 - (void)controller:(NSFetchedResultsController *)controller didChangeObject:(id)anObject atIndexPath:(nullable NSIndexPath *)indexPath forChangeType:(NSFetchedResultsChangeType)type newIndexPath:(nullable NSIndexPath *)newIndexPath {
     switch (type) {
@@ -177,39 +181,19 @@ Update is reported when an object's state changes, and the changes do not affect
             [self.tableView insertRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationLeft];
             break;
         case NSFetchedResultsChangeDelete:
-            [self.tableView deleteRowsAtIndexPaths:@[newIndexPath] withRowAnimation:UITableViewRowAnimationLeft];
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationLeft];
             break;
         default:
             break;
     }
 }
 
-
-
-/* Notifies the delegate that section and object changes are about to be processed and notifications will be sent.  Enables NSFetchedResultsController change tracking.
- Clients may prepare for a batch of updates by using this method to begin an update block for their view.
- */
-
 - (void)controllerWillChangeContent:(NSFetchedResultsController *)controller {
     [self.tableView beginUpdates];
 }
 
-/* Notifies the delegate that all section and object changes have been sent. Enables NSFetchedResultsController change tracking.
- Clients may prepare for a batch of updates by using this method to begin an update block for their view.
- Providing an empty implementation will enable change tracking if you do not care about the individual callbacks.
- */
-
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller {
     [self.tableView endUpdates];
-}
-
-/* Asks the delegate to return the corresponding section index entry for a given section name.	Does not enable NSFetchedResultsController change tracking.
- If this method isn't implemented by the delegate, the default implementation returns the capitalized first letter of the section name (seee NSFetchedResultsController sectionIndexTitleForSectionName:)
- Only needed if a section index is used.
- */
-
-- (nullable NSString *)controller:(NSFetchedResultsController *)controller sectionIndexTitleForSectionName:(NSString *)sectionName {
-    return nil;
 }
 
 

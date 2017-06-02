@@ -67,20 +67,10 @@
 		417F9C7C1E8D7CD300642F33 /* DemoProject */ = {
 			isa = PBXGroup;
 			children = (
-				417F9C801E8D7CD300642F33 /* AppDelegate.h */,
-				417F9C811E8D7CD300642F33 /* AppDelegate.m */,
-				41BC0FBD1ECB6397006D2947 /* DemoViewController.h */,
-				41BC0FBE1ECB6397006D2947 /* DemoViewController.m */,
-				41BC10111EDDE4F5006D2947 /* Person.h */,
-				41BC10121EDDE4F5006D2947 /* Person.m */,
-				41BC10141EDDE50E006D2947 /* Dog.h */,
-				41BC10151EDDE50E006D2947 /* Dog.m */,
-				41BC102F1EDDEB11006D2947 /* CoreDataStack.h */,
-				41BC10301EDDEB11006D2947 /* CoreDataStack.m */,
-				41BC10081EDDE3EA006D2947 /* Model2.xcdatamodeld */,
-				417F9C891E8D7CD300642F33 /* Assets.xcassets */,
-				417F9C8B1E8D7CD300642F33 /* LaunchScreen.storyboard */,
-				417F9C8E1E8D7CD300642F33 /* Info.plist */,
+				6392D1E91EE21F000050728D /* Application */,
+				6392D1EA1EE21F680050728D /* Controllers */,
+				6392D1EB1EE21F730050728D /* Models */,
+				6392D1EC1EE21F7B0050728D /* CoreData */,
 				417F9C7D1E8D7CD300642F33 /* Supporting Files */,
 			);
 			path = DemoProject;
@@ -92,6 +82,48 @@
 				417F9C7E1E8D7CD300642F33 /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		6392D1E91EE21F000050728D /* Application */ = {
+			isa = PBXGroup;
+			children = (
+				417F9C891E8D7CD300642F33 /* Assets.xcassets */,
+				417F9C8B1E8D7CD300642F33 /* LaunchScreen.storyboard */,
+				417F9C8E1E8D7CD300642F33 /* Info.plist */,
+				417F9C801E8D7CD300642F33 /* AppDelegate.h */,
+				417F9C811E8D7CD300642F33 /* AppDelegate.m */,
+			);
+			name = Application;
+			sourceTree = "<group>";
+		};
+		6392D1EA1EE21F680050728D /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				41BC0FBD1ECB6397006D2947 /* DemoViewController.h */,
+				41BC0FBE1ECB6397006D2947 /* DemoViewController.m */,
+			);
+			name = Controllers;
+			sourceTree = "<group>";
+		};
+		6392D1EB1EE21F730050728D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				41BC10111EDDE4F5006D2947 /* Person.h */,
+				41BC10121EDDE4F5006D2947 /* Person.m */,
+				41BC10141EDDE50E006D2947 /* Dog.h */,
+				41BC10151EDDE50E006D2947 /* Dog.m */,
+			);
+			name = Models;
+			sourceTree = "<group>";
+		};
+		6392D1EC1EE21F7B0050728D /* CoreData */ = {
+			isa = PBXGroup;
+			children = (
+				41BC102F1EDDEB11006D2947 /* CoreDataStack.h */,
+				41BC10301EDDEB11006D2947 /* CoreDataStack.m */,
+				41BC10081EDDE3EA006D2947 /* Model2.xcdatamodeld */,
+			);
+			name = CoreData;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
